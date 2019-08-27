@@ -1,0 +1,109 @@
+
+<html>
+        <body>
+             <head>
+                <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@1.0.0-beta.34/dist/web3.min.js"></script>
+                <link rel="stylesheet" type="text/css" href="tasksStyles.css">
+              <title>SmartPay</title>
+             </head>
+                     <div class="container">
+                         <div class="screen">
+                             <div class="app-title">
+                                 <h1>Make Payment</h1>
+                             </div>
+                         <div class="form">
+                             <div class="control-group">
+                                 <input type="text" class="field" value="" placeholder="Amount (1000000000000000000 wei)" id="amt">
+                                 <label for="name"></label>
+                             </div>
+     
+                             <div class="control-group">
+                                 <input type="text" class="field" value="" placeholder="Decription" id="description">
+                                 <label  for="dec"></label>
+                             </div>
+                                 <input type="submit" value="Pay Now" onclick="makePayment()" class="btn btn-primary btn-large btn-block">
+     
+                                 
+                                <p id="msgs"><strong></strong></p> 
+                                
+                         </div>
+                         </div>
+                         <br>
+                         <input type="button" class="btn btn-primary btn-large btn-block" value="Back to tasks" 
+                         onclick="window.location.href='./index.html'"/>
+                     </div>
+	<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+	<script type="text/javascript" src="contractABIandAdd.js"></script>  
+
+    <script>
+    
+    //Web3 interaction with the blockchain via script begins.
+
+		if (typeof web3 !== 'undefined')
+        {
+            web3 = new Web3(web3.currentProvider);
+        }
+    	else
+        {
+            // set the provider you want from Web3.providers
+            web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545")); // This node address should be same for Ganache.
+            
+        }
+        web3.eth.getAccounts().then(accounts => {
+            let accountNo = 1;  // Select account Number based on Ganache-cli accounts.
+            console.log(accounts[accountNo])
+            web3.eth.defaultAccount =accounts[accountNo]
+        });
+		//Web3 interaction with the blockchain ends.
+
+		var PaymentArea = new web3.eth.Contract(ABI,contractAddress, {defaultGas: suppliedGas});// End of ABi Code from Remix.
+
+
+    // Web3 Stats begin for gas considerations.
+
+    web3.eth.net.getNetworkType().then(console.log);
+        var gPrice = web3.eth.defaultGasPrice
+        console.log("Default gas price: ", gPrice)
+        
+        var dGas = web3.eth.defaultGas
+        console.log("Default gas: ", dGas)
+
+        var defaultBlockGasLt = web3.eth.defaultBlock.gasLimit
+        console.log("Default Block Gas limit is: ", defaultBlockGasLt)
+
+        // Web3 Stats end.
+
+        // Send the transaction to the smart contract by calling the smart contract's function.
+
+    function makePayment(){
+        let txHash = ''
+        let blkNum = ''
+        let err = ''
+        var amt         = $("#amt").val();
+        var decription  = $("#description").val();
+        console.log("Amount entered is:", amt);
+		console.log("Description is: ", decription)
+
+        // Sending the transaction to the smart contract.
+
+        PaymentArea.methods.acceptPayment(amt, decription).send({
+                    from: web3.eth.defaultAccount,
+                    gas: 90000,
+                    value:1000000000000000000
+        }).on('transactionHash', (hash)=>{  
+            txHash = hash;
+            console.log("Trans. hash is: ", txHash);
+        }).on('receipt', (receipt)=>{   
+            transReceipt = receipt;
+            blkNum = transReceipt['blockNumber']
+            console.log("Trans. Block Number is: ", blkNum);
+            document.getElementById("msgs").innerHTML = "Transaction successful."
+        }).on('error', (error)=>{
+            theError = error;
+            document.getElementById("msgs").innerHTML = "Sorry. Error occured."
+        }) // This displays transaction hash and block number as well as other details from 'receipt' if needed.
+
+    }
+    </script>
+         </body>
+     </html>

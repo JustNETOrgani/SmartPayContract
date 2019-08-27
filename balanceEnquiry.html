@@ -1,0 +1,108 @@
+
+<html>
+        <body>
+             <head>
+                <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@1.0.0-beta.34/dist/web3.min.js"></script>
+				<!--<script src="./contractABIandAdd.js"></script>-->
+				<link rel="stylesheet" type="text/css" href="tasksStyles.css">
+              <title>Balance Enquiry</title>
+             </head>
+                     <div class="container">
+                         <div class="screen">
+                             <div class="app-title">
+                                 <h1>Balance Enquiry</h1>
+                             </div>
+                         <div class="form">
+                             <div class="control-group">
+									<table>
+											<thread>
+											<tr>
+												<th>Balance below</th>
+											</tr>
+											<tr>
+												<td id="accBal"></td>
+											</tr>
+											</thread>
+									</table>
+                             </div>
+                                 <input type="submit" value="Check Balance" onclick="checkBalance()" class="btn btn-primary btn-large btn-block">
+     
+                                 
+                                <p id="msgs"><strong></strong></p> 
+                                
+                         </div>
+                         </div>
+                         <br>
+                         <input type="button" class="btn btn-primary btn-large btn-block" value="Back to tasks" 
+                         onclick="window.location.href='./index.html'"/>
+                     </div>
+	<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+	<script type="text/javascript" src="contractABIandAdd.js"></script> 
+
+    <script>
+
+    
+    //Web3 interaction with the blockchain via script begins.
+
+		if (typeof web3 !== 'undefined')
+        {
+            web3 = new Web3(web3.currentProvider);
+        }
+    	else
+        {
+            // set the provider you want from Web3.providers
+            web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545")); // This node address should be same for Ganache.
+            
+        }
+        web3.eth.getAccounts().then(accounts => {
+            let accountNo = 0;  // Select account Number based on Ganache-cli accounts.
+            console.log(accounts[accountNo])
+            web3.eth.defaultAccount =accounts[accountNo]
+        });
+		//Web3 interaction with the blockchain ends.
+
+        var PaymentArea = new web3.eth.Contract(ABI,contractAddress, {defaultGas: suppliedGas}); // End of ABi Code from Remix.
+
+
+    // Web3 Stats begin for gas considerations.
+
+    web3.eth.net.getNetworkType().then(console.log);
+        var gPrice = web3.eth.defaultGasPrice
+        console.log("Default gas price: ", gPrice)
+        
+        var dGas = web3.eth.defaultGas
+        console.log("Default gas: ", dGas)
+
+        var defaultBlockGasLt = web3.eth.defaultBlock.gasLimit
+        console.log("Default Block Gas limit is: ", defaultBlockGasLt)
+
+        // Web3 Stats end.
+
+        // Send the transaction to the smart contract by calling the smart contract's function.
+
+    function checkBalance(){
+		console.log("Checking balance. Please wait...")
+        let txHash = ''
+        let blkNum = ''
+        let err = ''
+
+        // Sending the transaction to the smart contract.
+
+		let accountBalance = ''
+        PaymentArea.methods.getBalance().call({from: web3.eth.defaultAccount},
+		function(error, result){
+			// Handle errors if any occure.
+  			if(error) {
+					document.getElementById("msgs").innerHTML = "Sorry. Error occured."
+    				return;
+  			}
+  			// Else use the data recieved.
+			accountBalance = result;
+			document.getElementById("accBal").innerHTML = web3.utils.fromWei(accountBalance, 'ether')+ " Ether(s)"; 
+  			console.log(accountBalance);
+		});
+
+    }
+    </script>
+         </body>
+     </html>

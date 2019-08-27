@@ -1,0 +1,181 @@
+
+<html>
+        <body>
+             <head>
+                <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@1.0.0-beta.34/dist/web3.min.js"></script>
+                <link rel="stylesheet" type="text/css" href="trackerStyles.css">
+              <title>Activity Tracker</title>
+             </head>
+                     <div class="containerAcc">
+                         <div class="screen">
+                             <div class="app-title">
+                                 <h1>Track contract's events</h1>
+                             </div>
+                         <div class="form"> 
+                            <span>(Select Event name)：</span>
+                                <select id="eventSelection" name="eventOption">
+                                    <option value="depositMade">DepositMade</option>
+                                    <option value="MoneySentFromAccount">MoneySentFromAccount</option>
+                                    <option value="MoneySentFromContract">MoneySentFromContract</option>
+                                </select>
+                                <br>
+                                <br>
+                                <br>
+                                <br>
+                                 <input type="submit" value="Display Results" onclick="trackEvents()" class="btn btn-primary btn-large btn-block">
+     
+                                 
+                                <p id="msgs"><strong></strong></p> 
+                                
+                         </div>
+                         </div>
+                         <br>
+                         <br>
+                         <input type="button" class="btn btn-primary btn-large btn-block" value="Back to tasks" 
+                         onclick="window.location.href='./index.html'"/>
+                     </div>
+                     <div id="rightContainer" class="screen">
+                            <div class="app-title">
+                                <h1>Your contract's events appears below.</h1>
+                            </div>
+                            <div id="eventsHappenings" style="overflow-x:auto">
+                                <table>
+                                    <thread>
+                                        <tbody>
+
+                                        </tbody>
+                                    </thread>
+                                </table>
+                            
+                            </div>
+                     </div>
+	<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+	<script type="text/javascript" src="contractABIandAdd.js"></script>  
+
+    <script>
+    
+    //Web3 interaction with the blockchain via script begins.
+
+		if (typeof web3 !== 'undefined')
+        {
+            web3 = new Web3(web3.currentProvider);
+        }
+    	else
+        {
+            // set the provider you want from Web3.providers
+            web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545")); // This node address should be same for Ganache.
+            
+        }
+        web3.eth.getAccounts().then(accounts => {
+            let accountNo = 0;  // Select account Number based on Ganache-cli accounts.
+            console.log(accounts[accountNo])
+            web3.eth.defaultAccount =accounts[accountNo]
+        });
+		//Web3 interaction with the blockchain ends.
+
+        var PaymentArea = new web3.eth.Contract(ABI,contractAddress, {defaultGas: suppliedGas});// End of ABi Code from Remix.
+
+
+    // Web3 Stats begin for gas considerations.
+
+    web3.eth.net.getNetworkType().then(console.log);
+        var gPrice = web3.eth.defaultGasPrice
+        console.log("Default gas price: ", gPrice)
+        
+        var dGas = web3.eth.defaultGas
+        console.log("Default gas: ", dGas)
+
+        var defaultBlockGasLt = web3.eth.defaultBlock.gasLimit
+        console.log("Default Block Gas limit is: ", defaultBlockGasLt)
+
+        // Web3 Stats end.
+
+        // Send the transaction to the smart contract by calling the smart contract's function.
+
+    function trackEvents(){
+        
+        //let eventName   = MoneySentFromAccount; // Use this to select desired events.
+        var eventType  = $("#eventSelection").val();
+        console.log("Selected event is: ", eventType)
+        
+
+        // Making a choice based on type of event user selected.
+        if(eventType=="depositMade"){
+            PaymentArea.getPastEvents('depositMade',{fromBlock: 0, toBlock: 'latest'},
+            function(err, results) { 
+                if(err) {
+					document.getElementById("msgs").innerHTML = "Sorry. Error occured."
+    				return;
+  			}
+  			// Else use the data recieved.
+            console.log("Events is: ", results)
+
+            var size = Object.keys(results).length;
+			if(size==0){
+					document.getElementById("msgs").innerHTML = "No records found."
+			}
+            console.log("The size is: ", size)
+            var itemsNeeded = 3;
+            for (var {returnValues:{from: From, amount: Amount, description: Description}} of results) {
+            console.log('From: ' + From + ', Amount: ' + Amount + ', Description: ' + Description);       
+            }
+            $('tbody').append('<tr><td>'+'From'+'</td><td>'+'Amount (Eth)'+'</td><td>'+'Description'+'</td></tr>')
+            results.forEach(function(item){
+			let fromWeiToEther = web3.utils.fromWei(item.returnValues.amount,'ether');
+            $('tbody').append('<tr><td>'+item.returnValues.from+'</td><td>'+fromWeiToEther+'</td><td>'+item.returnValues.description+'</td></tr>')
+            })
+            } 
+            )
+        }
+        if(eventType=="MoneySentFromAccount"){
+            PaymentArea.getPastEvents('MoneySentFromAccount',{fromBlock: 0, toBlock: 'latest'},
+            (err, results) => { if(err) {
+					document.getElementById("msgs").innerHTML = "Sorry. Error occured."
+    				return;
+  			}
+  			// Else use the data recieved.
+                console.log("Events is: ", results)
+
+                var size = Object.keys(results).length;
+				if(size==0){
+					document.getElementById("msgs").innerHTML = "No records found."
+				}
+                console.log("The size is: ", size)
+                for (var {returnValues:{from: From, to: To, amount: Amount}} of results) {
+                console.log('From: ' + From + ', To: ' + To + ', Amount: ' + Amount);       
+                }
+                $('tbody').append('<tr><td>'+'From'+'</td><td>'+'To'+'</td><td>'+'Amount (Eth)'+'</td></tr>')
+                results.forEach(function(item){
+				let fromWeiToEther = web3.utils.fromWei(item.returnValues.amount,'ether');
+                $('tbody').append('<tr><td>'+item.returnValues.from+'</td><td>'+item.returnValues.to+'</td><td>'+fromWeiToEther+'</td></tr>')
+            })
+            })
+        }
+        if(eventType=="MoneySentFromContract"){
+            PaymentArea.getPastEvents('MoneySentFromContract',{fromBlock: 0, toBlock: 'latest'},
+            (err, results) => { if(err) {
+					document.getElementById("msgs").innerHTML = "Sorry. Error occured."
+    				return;
+  			}
+  			// Else use the data recieved.
+                console.log("Events is: ", results)
+
+                var size = Object.keys(results).length;
+				if(size==0){
+					document.getElementById("msgs").innerHTML = "No records found."
+				}
+                console.log("The size is: ", size)
+                for (var {returnValues:{from: From, to: To, amount: Amount}} of results) {
+                console.log('From: ' + From + ', To: ' + To + ', Amount: ' + Amount);       
+                }
+                $('tbody').append('<tr><td>'+'From'+'</td><td>'+'To'+'</td><td>'+'Amount (Eth)'+'</td></tr>')
+                results.forEach(function(item){
+				let fromWeiToEther = web3.utils.fromWei(item.returnValues.amount,'ether');
+                $('tbody').append('<tr><td>'+item.returnValues.from+'</td><td>'+item.returnValues.to+'</td><td>'+fromWeiToEther+'</td></tr>')
+                })
+            })
+        }
+    }
+    </script>
+  </body>
+</html>
